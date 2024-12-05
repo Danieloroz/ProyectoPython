@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualización de Datos del Sensor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Visualización de Datos del Sensor</h1>
+    
+    <!-- Formulario para seleccionar el sensor y la fecha -->
+    <form id="dataForm">
+        <label for="sensor">Selecciona un Sensor:</label>
+        <select id="sensor" name="sensor">
+            {% for sensor in sensors %}
+                <option value="{{ sensor }}">{{ sensor }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        
+        <label for="date">Selecciona la Fecha:</label>
+        <input type="date" id="date" name="date">
+        <br>
+
+        <button type="submit">Mostrar Datos</button>
+    </form>
+
+    <!-- Tabla para mostrar los datos -->
+    <h2>Datos del Sensor</h2>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <!-- Gráfico de línea -->
+    <h2>Gráfico de Comportamiento del Sensor</h2>
+    <canvas id="sensorChart" width="400" height="200"></canvas>
+
+    <script>
+        $(document).ready(function() {
+            $('#dataForm').on('submit', function(event) {
+                event.preventDefault();
+
+                // Obtenemos los valores seleccionados
+                var sensor_id = $('#sensor').val();
+                var date = $('#date').val();
+
+                // Realizamos la solicitud GET a Flask para obtener los datos
+                $.get('/data', { sensor_id: sensor_id, date: date }, function(data) {
+                    // Limpiamos la tabla de datos
+                    $('#dataTable tbody').empty();
+                    
+                    // Arreglos para los datos del gráfico
+                    var times = [];
+                    var values = [];
+
+                    // Llenamos la tabla con los datos
+                    data.forEach(function(item) {
+                        $('#dataTable tbody').append('<tr><td>' + item.time + '</td><td>' + item.value + '</td></tr>');
+                        times.push(item.time);
+                        values.push(item.value);
+                    });
+
+                    // Dibuja el gráfico
+                    var ctx = document.getElementById('sensorChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: times,
+                            datasets: [{
+                                label: 'Valor del Sensor',
+                                data: values,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 2,
+                                fill: false
+                            }]
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
